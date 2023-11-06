@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Compose Test 1"
+rootProject.name = "Compose Test"
 include(":app")

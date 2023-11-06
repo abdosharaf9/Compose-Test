@@ -1,4 +1,4 @@
-package com.abdosharaf.composetest1.ui.theme
+package com.abdosharaf.composetest.ui.theme
 
 import android.app.Activity
 import android.os.Build

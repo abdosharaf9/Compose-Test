@@ -1,4 +1,4 @@
-package com.abdosharaf.composetest1
+package com.abdosharaf.composetest
 
 import org.junit.Test
 

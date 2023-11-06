@@ -1,4 +1,4 @@
-package com.abdosharaf.composetest1
+package com.abdosharaf.composetest
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
