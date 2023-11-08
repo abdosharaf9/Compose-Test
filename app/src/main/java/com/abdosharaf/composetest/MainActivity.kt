@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
                             append("A")
                         }
 
-                        append("bdo")
+                        append("bdo ")
 
                         withStyle(style = SpanStyle(
                             color = Color.Blue,
