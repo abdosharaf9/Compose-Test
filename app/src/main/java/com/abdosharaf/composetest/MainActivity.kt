@@ -3,101 +3,82 @@ package com.abdosharaf.composetest
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.TextField
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
-import kotlin.random.Random
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-//            ColorBox(modifier = Modifier.fillMaxSize())
-
-            val color = remember {
-                mutableStateOf(Color.Red)
+            var textFieldState by remember {
+                mutableStateOf("")
             }
+            val snackBarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
 
-            Column(modifier = Modifier.fillMaxSize()) {
-                ColorBoxV2(
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                snackbarHost = { SnackbarHost(snackBarHostState) },
+            ) { innerPadding ->
+                Column(
                     modifier = Modifier
-                        .weight(1f)
                         .fillMaxSize()
+                        .padding(horizontal = 25.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    color.value = it
-                }
+                    TextField(
+                        value = textFieldState,
+                        singleLine = true,
+                        onValueChange = {
+                            textFieldState = it
+                        },
+                        label = {
+                            Text(text = "Enter Your Name")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(innerPadding)
+                    )
 
-                Box(
-                    modifier = Modifier
-                        .weight(2f)
-                        .fillMaxSize()
-                        .background(color.value)
-                )
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                snackBarHostState.showSnackbar(
+                                    message = "Welcome, ${textFieldState.ifEmpty { "Test" }}!",
+                                    actionLabel = "Label",
+                                    duration = SnackbarDuration.Short
+                                )
+                            }
+                        }, modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Text(text = "Click Here To Welcome You!!")
+                    }
+                }
             }
         }
-    }
-}
-
-@Composable
-fun ColorBox(modifier: Modifier = Modifier) {
-    val color = remember {
-        mutableStateOf(Color.Yellow)
-    }
-
-    Box(modifier = modifier
-        .background(color.value)
-        .clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) {
-            color.value = Color(
-                Random.nextFloat(),
-                Random.nextFloat(),
-                Random.nextFloat()
-            )
-        }, contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Click here to change the color!!",
-            fontSize = 30.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
-
-@Composable
-fun ColorBoxV2(modifier: Modifier = Modifier, onClick: (Color) -> Unit) {
-    Box(modifier = modifier
-        .background(Color.Yellow)
-        .clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) {
-            onClick(
-                Color(
-                    Random.nextFloat(),
-                    Random.nextFloat(),
-                    Random.nextFloat()
-                )
-            )
-        }, contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "Click here to change the color!!",
-            fontSize = 30.sp,
-            textAlign = TextAlign.Center
-        )
     }
 }
