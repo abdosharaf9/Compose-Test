@@ -1,46 +1,41 @@
 package com.abdosharaf.composetest
 
 import android.os.Bundle
-import android.view.MotionEvent
 import androidx.activity.compose.setContent
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInteropFilter
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.PointMode
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.roundToInt
+import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.sin
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,126 +44,114 @@ class MainActivity : ComponentActivity() {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF101010))
-                    .padding(16.dp),
+                    .background(Color(0xFF101010)),
                 contentAlignment = Alignment.Center
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(width = 1.dp, color = Color.DarkGray, shape = RoundedCornerShape(16.dp))
-                        .padding(30.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    var volume by remember {
-                        mutableStateOf(0f)
-                    }
-                    val barsCount = 20
-
-                    MusicKnob(modifier = Modifier.size(90.dp), onValueChanged = { volume = it })
-
-                    Spacer(modifier = Modifier.width(16.dp))
-
-                    VolumeBar(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(40.dp),
-                        totalCount = barsCount,
-                        activeBars = (barsCount * volume).roundToInt()
-                    )
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-fun VolumeBar(
-    modifier: Modifier = Modifier,
-    activeBars: Int = 0,
-    totalCount: Int = 10
-) {
-    BoxWithConstraints(
-        modifier = modifier,
-        contentAlignment = Alignment.Center
-    ) {
-        val barWidth = remember {
-            constraints.maxWidth / (2f * totalCount)
-        }
-
-        Canvas(modifier = modifier) {
-            for (i in 0 until totalCount) {
-                drawRoundRect(
-                    color = if (i > activeBars) Color.DarkGray else Color.Green,
-                    topLeft = Offset(i * barWidth * 2f + barWidth / 2f, 0f),
-                    size = Size(barWidth, constraints.maxHeight.toFloat()),
-                    cornerRadius = CornerRadius(0f)
+                Timer(
+                    totalTime = 10L * 1000L,
+                    activeColor = Color.Green,
+                    inactiveColor = Color.DarkGray,
+                    thumbColor = Color(0xFF37B900),
+                    modifier = Modifier.size(200.dp)
                 )
             }
         }
     }
 }
 
-
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MusicKnob(
+fun Timer(
     modifier: Modifier = Modifier,
-    limitAngle: Float = 25f,
-    onValueChanged: (Float) -> Unit
+    totalTime: Long,
+    activeColor: Color,
+    inactiveColor: Color,
+    thumbColor: Color,
+    strokeWidth: Dp = 5.dp,
+    initialValue: Float = 1f
 ) {
-    var rotation by remember {
-        mutableStateOf(limitAngle)
+    var size by remember {
+        mutableStateOf(IntSize.Zero)
     }
-    var centerX by remember {
-        mutableStateOf(0f)
+    var currentTime by remember {
+        mutableStateOf(totalTime)
     }
-    var centerY by remember {
-        mutableStateOf(0f)
+    var value by remember {
+        mutableStateOf(initialValue)
     }
-    var touchX by remember {
-        mutableStateOf(0f)
-    }
-    var touchY by remember {
-        mutableStateOf(0f)
+    var isRunning by remember {
+        mutableStateOf(false)
     }
 
-    Image(
-        painter = painterResource(id = R.drawable.music_knob),
-        contentDescription = "Music Knob",
-        modifier = modifier
-            .fillMaxSize()
-            .onGloballyPositioned {
-                val bounds = it.boundsInWindow()
-                centerX = bounds.size.width / 2f
-                centerY = bounds.size.height / 2f
-            }
-            .pointerInteropFilter { event ->
-                touchX = event.x
-                touchY = event.y
-                val angle = -atan2(centerX - touchX, centerY - touchY) * (180f / PI).toFloat()
+    LaunchedEffect(key1 = currentTime, key2 = isRunning) {
+        if (currentTime > 0 && isRunning) {
+            val delayValue = totalTime / 1000L
+            delay(delayValue)
+            currentTime -= delayValue
+            value = currentTime / totalTime.toFloat()
+            if (currentTime <= 0) isRunning = false
+        }
+    }
 
-                when (event.action) {
-                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
-                        if (angle !in -limitAngle..limitAngle) {
-                            val fixedAngle =
-                                if (angle in -180f..-limitAngle) angle + 360f else angle
-                            rotation = fixedAngle
+    Box(modifier = modifier.onSizeChanged { size = it }, contentAlignment = Alignment.Center) {
+        Canvas(modifier = modifier) {
+            drawArc(
+                color = inactiveColor,
+                startAngle = -215f,
+                sweepAngle = 250f,
+                useCenter = false,
+                size = Size(width = size.width.toFloat(), height = size.height.toFloat()),
+                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+            )
 
-                            val percent = (fixedAngle - limitAngle) / (360f - 2 * limitAngle)
-                            onValueChanged(percent)
+            drawArc(
+                color = activeColor,
+                startAngle = -215f,
+                sweepAngle = 250f * value,
+                useCenter = false,
+                size = Size(width = size.width.toFloat(), height = size.height.toFloat()),
+                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
+            )
 
-                            true
-                        } else {
-                            false
-                        }
-                    }
+            val center = Offset(x = size.width / 2f, y = size.height / 2f)
+            val theta = (250f * value + 145f) * (PI / 180f).toFloat()
+            val radius = size.width / 2f
+            val a = cos(theta) * radius
+            val b = sin(theta) * radius
+            drawPoints(
+                points = listOf(Offset(x = center.x + a, y = center.y + b)),
+                pointMode = PointMode.Points,
+                color = thumbColor,
+                strokeWidth = (strokeWidth * 3f).toPx(),
+                cap = StrokeCap.Round
+            )
+        }
 
-                    else -> false
+        Text(
+            text = ceil(currentTime.toDouble().div(1000L)).toLong().toString(),
+            color = Color.White,
+            fontSize = 44.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Button(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (isRunning && currentTime > 0L) Color.Red else Color.Green
+            ),
+            onClick = {
+                if (currentTime <= 0L) {
+                    currentTime = totalTime
+                    isRunning = true
+                } else {
+                    isRunning = !isRunning
                 }
-            }
-            .rotate(rotation)
-    )
+            }) {
+            Text(
+                text = if (isRunning && currentTime > 0L) "Stop"
+                else if (!isRunning && currentTime > 0L) "Start"
+                else "Restart",
+                color = Color(0xFF101010)
+            )
+        }
+    }
 }
