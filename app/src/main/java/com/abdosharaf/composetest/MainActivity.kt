@@ -3,56 +3,83 @@ package com.abdosharaf.composetest
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.Canvas
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PointMode
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
-import kotlin.math.PI
-import kotlin.math.ceil
-import kotlin.math.cos
-import kotlin.math.sin
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            HomeScreen()
+        }
+    }
+}
+
+@Preview
+@Composable
+fun Test() {
+    HomeScreen()
+}
+
+@Composable
+fun HomeScreen() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF101010))
+            .padding(16.dp),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        DropDown(
+            title = "Click the icon",
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF101010)),
-                contentAlignment = Alignment.Center
+                    .height(100.dp)
+                    .fillMaxWidth()
+                    .background(Color.Blue)
             ) {
-                Timer(
-                    totalTime = 10L * 1000L,
-                    activeColor = Color.Green,
-                    inactiveColor = Color.DarkGray,
-                    thumbColor = Color(0xFF37B900),
-                    modifier = Modifier.size(200.dp)
+                Text(
+                    text = "Have a nice day ❤️",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -60,98 +87,66 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Timer(
+fun DropDown(
+    title: String,
     modifier: Modifier = Modifier,
-    totalTime: Long,
-    activeColor: Color,
-    inactiveColor: Color,
-    thumbColor: Color,
-    strokeWidth: Dp = 5.dp,
-    initialValue: Float = 1f
+    isInitiallyOpened: Boolean = false,
+    content: @Composable () -> Unit
 ) {
-    var size by remember {
-        mutableStateOf(IntSize.Zero)
-    }
-    var currentTime by remember {
-        mutableStateOf(totalTime)
-    }
-    var value by remember {
-        mutableStateOf(initialValue)
-    }
-    var isRunning by remember {
-        mutableStateOf(false)
+    var isOpened by remember {
+        mutableStateOf(isInitiallyOpened)
     }
 
-    LaunchedEffect(key1 = currentTime, key2 = isRunning) {
-        if (currentTime > 0 && isRunning) {
-            val delayValue = totalTime / 1000L
-            delay(delayValue)
-            currentTime -= delayValue
-            value = currentTime / totalTime.toFloat()
-            if (currentTime <= 0) isRunning = false
-        }
-    }
+    val alpha = animateFloatAsState(
+        targetValue = if (isOpened) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = ""
+    )
 
-    Box(modifier = modifier.onSizeChanged { size = it }, contentAlignment = Alignment.Center) {
-        Canvas(modifier = modifier) {
-            drawArc(
-                color = inactiveColor,
-                startAngle = -215f,
-                sweepAngle = 250f,
-                useCenter = false,
-                size = Size(width = size.width.toFloat(), height = size.height.toFloat()),
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
-            )
+    val rotateX = animateFloatAsState(
+        targetValue = if (isOpened) 0f else -90f,
+        animationSpec = tween(durationMillis = 300),
+        label = ""
+    )
 
-            drawArc(
-                color = activeColor,
-                startAngle = -215f,
-                sweepAngle = 250f * value,
-                useCenter = false,
-                size = Size(width = size.width.toFloat(), height = size.height.toFloat()),
-                style = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
-            )
-
-            val center = Offset(x = size.width / 2f, y = size.height / 2f)
-            val theta = (250f * value + 145f) * (PI / 180f).toFloat()
-            val radius = size.width / 2f
-            val a = cos(theta) * radius
-            val b = sin(theta) * radius
-            drawPoints(
-                points = listOf(Offset(x = center.x + a, y = center.y + b)),
-                pointMode = PointMode.Points,
-                color = thumbColor,
-                strokeWidth = (strokeWidth * 3f).toPx(),
-                cap = StrokeCap.Round
-            )
-        }
-
-        Text(
-            text = ceil(currentTime.toDouble().div(1000L)).toLong().toString(),
-            color = Color.White,
-            fontSize = 44.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Button(
-            modifier = Modifier.align(Alignment.BottomCenter),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (isRunning && currentTime > 0L) Color.Red else Color.Green
-            ),
-            onClick = {
-                if (currentTime <= 0L) {
-                    currentTime = totalTime
-                    isRunning = true
-                } else {
-                    isRunning = !isRunning
-                }
-            }) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
-                text = if (isRunning && currentTime > 0L) "Stop"
-                else if (!isRunning && currentTime > 0L) "Start"
-                else "Restart",
-                color = Color(0xFF101010)
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp
             )
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowDown,
+                contentDescription = "Open or close the drop down",
+                tint = Color.White,
+                modifier = Modifier
+                    .clickable {
+                        isOpened = !isOpened
+                    }
+                    .scale(1f, if (isOpened) -1f else 1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    transformOrigin =
+                        TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 0f)
+                    rotationX = rotateX.value
+                }
+                .alpha(alpha.value)
+        ) {
+            content()
         }
     }
 }
