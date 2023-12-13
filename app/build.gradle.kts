@@ -72,4 +72,7 @@ dependencies {
 
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
+
+    // Permissions Handling
+    implementation("com.google.accompanist:accompanist-permissions:0.21.1-beta")
 }
