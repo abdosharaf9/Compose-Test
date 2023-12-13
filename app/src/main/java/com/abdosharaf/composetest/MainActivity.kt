@@ -64,60 +64,58 @@ fun HomeScreen() {
     })
 
     Column(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         permissionState.permissions.forEach { perm ->
             when (perm.permission) {
                 Manifest.permission.CAMERA -> {
-                    when {
+                    val text = when {
                         perm.hasPermission -> {
-                            Text(text = "Camera permission accepted", textAlign = TextAlign.Center)
+                            "Camera permission accepted"
                         }
 
                         perm.shouldShowRationale -> {
-                            Text(
-                                text = "Camera permission is needed to access the camera",
-                                textAlign = TextAlign.Center
-                            )
+                            "Camera permission is needed to access the camera"
                         }
 
                         perm.isPermanentlyDenied() -> {
-                            Text(
-                                text = "Camera permission was permanently denied. You can enable it in the app settings.",
-                                textAlign = TextAlign.Center
-                            )
+                            "Camera permission was permanently denied. You can enable it in the app settings."
+                        }
+
+                        else -> {
+                            "Camera permission is needed to access the camera"
                         }
                     }
+                    Text(text = text, textAlign = TextAlign.Center)
                 }
 
                 Manifest.permission.RECORD_AUDIO -> {
-                    when {
+                    val text = when {
                         perm.hasPermission -> {
-                            Text(
-                                text = "Record audio permission accepted",
-                                modifier = Modifier.padding(top = 16.dp),
-                                textAlign = TextAlign.Center
-                            )
+                            "Record audio permission accepted"
                         }
 
                         perm.shouldShowRationale -> {
-                            Text(
-                                text = "Record audio permission is needed to access the microphone",
-                                modifier = Modifier.padding(top = 16.dp),
-                                textAlign = TextAlign.Center
-                            )
+                            "Record audio permission is needed to access the microphone"
                         }
 
                         perm.isPermanentlyDenied() -> {
-                            Text(
-                                text = "Record audio permission was permanently denied. You can enable it in the app settings.",
-                                modifier = Modifier.padding(top = 16.dp),
-                                textAlign = TextAlign.Center
-                            )
+                            "Record audio permission was permanently denied. You can enable it in the app settings."
+                        }
+
+                        else -> {
+                            "Record audio permission is needed to access the microphone"
                         }
                     }
+                    Text(
+                        text = text,
+                        modifier = Modifier.padding(top = 16.dp),
+                        textAlign = TextAlign.Center
+                    )
                 }
             }
         }
@@ -125,4 +123,5 @@ fun HomeScreen() {
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-fun PermissionState.isPermanentlyDenied() = !hasPermission && !shouldShowRationale
+fun PermissionState.isPermanentlyDenied() =
+    !hasPermission && !shouldShowRationale && permissionRequested
