@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+//    id("com.google.devtools.ksp") version "1.8.10-1.0.9"
 }
 
 android {
@@ -75,4 +76,8 @@ dependencies {
 
     // Permissions Handling
     implementation("com.google.accompanist:accompanist-permissions:0.21.1-beta")
+
+    // Navigation Library
+//    implementation("io.github.raamcosta.compose-destinations:core:1.8.42-beta")
+//    ksp("io.github.raamcosta.compose-destinations:ksp:1.8.42-beta")
 }
