@@ -3,42 +3,32 @@ package com.abdosharaf.composetest
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Slider
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.constraintlayout.compose.ExperimentalMotionApi
-import androidx.constraintlayout.compose.MotionLayout
-import androidx.constraintlayout.compose.MotionScene
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            HomeScreen()
+            val viewModel = viewModel<MainViewModel>()
+            val state = viewModel.state
+            HomeScreen(state, viewModel)
         }
     }
 }
@@ -46,74 +36,46 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun Test() {
-    HomeScreen()
+//    HomeScreen()
 }
 
 @Composable
-fun HomeScreen() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        var progress by remember {
-            mutableFloatStateOf(0f)
+fun HomeScreen(state: ScreenState, viewModel: MainViewModel) {
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(state.items.size) {
+            if (it >= state.items.size - 1 && !state.endReached && !state.isLoading) {
+                viewModel.loadNextItems()
+            }
+
+            val item = state.items[it]
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = item.title,
+                    fontSize = 20.sp,
+                    color = Color.Black
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(text = item.description)
+            }
         }
 
-        MotionHeader(progress = progress)
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Slider(
-            value = progress,
-            onValueChange = { progress = it },
-            modifier = Modifier.padding(horizontal = 32.dp)
-        )
-    }
-}
-
-@OptIn(ExperimentalMotionApi::class)
-@Composable
-fun MotionHeader(progress: Float) {
-    val context = LocalContext.current
-    val motionScene = remember {
-        context.resources
-            .openRawResource(R.raw.motion_scence)
-            .readBytes()
-            .decodeToString()
-    }
-
-    MotionLayout(
-        motionScene = MotionScene(motionScene),
-        progress = progress,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        val customProperties = motionProperties(id = "profile_pic")
-
-        Box(
-            modifier = Modifier
-                .background(Color.DarkGray)
-                .layoutId("box")
-        )
-
-        Image(
-            painter = painterResource(id = R.drawable.my_photo),
-            contentDescription = null,
-            modifier = Modifier
-                .clip(CircleShape)
-                .border(
-                    width = 2.dp,
-                    color = customProperties.value.color("background"),
-                    shape = CircleShape
-                )
-                .layoutId("profile_pic")
-        )
-
-        Text(
-            text = "Abdo Sharaf",
-            fontSize = 24.sp,
-            modifier = Modifier.layoutId("username"),
-            color = customProperties.value.color("background")
-        )
+        if (state.isLoading) {
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+        }
     }
 }
