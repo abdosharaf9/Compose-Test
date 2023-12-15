@@ -83,4 +83,7 @@ dependencies {
 
     // ViewModel
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+
+    // Old Material to use BottomSheetScaffold for now!!
+    implementation("androidx.compose.material:material:1.5.4")
 }
