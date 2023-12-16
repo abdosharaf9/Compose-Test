@@ -3,37 +3,61 @@ package com.abdosharaf.composetest
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.animation.core.Animatable
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+
+//    private var i = 0
+//    lateinit var viewModel: ViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            HomeScreen()
+            var text by remember {
+                mutableStateOf("")
+            }
+
+            /*Button(onClick = { text += "#" }) {
+                i++
+                Text(text = text)
+            }*/
+
+            /*LaunchedEffect(key1 = text) {
+                delay(1000L)
+                println("The text is $text")
+            }*/
+
+            /*LaunchedEffect(key1 = true){
+                viewModel.sharedFlow.collect { event ->
+                    // Some action
+                }
+            }*/
         }
     }
 }
@@ -46,64 +70,93 @@ fun Test() {
 
 @Composable
 fun HomeScreen() {
-    var count by remember {
-        mutableIntStateOf(0)
+
+}
+
+@Composable
+fun AnimatedText(counter: Int) {
+    val animatable = remember {
+        Animatable(initialValue = 0f)
     }
+    LaunchedEffect(key1 = counter) {
+        animatable.animateTo(targetValue = counter.toFloat())
+    }
+}
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        AnimatedCounter(count = count, textStyle = MaterialTheme.typography.h2)
+@Composable
+fun RememberCoroutine() {
+    val scope = rememberCoroutineScope()
+    Button(onClick = {
+        scope.launch {
+            delay(1000L)
+            println("Hello World!")
+        }
+    }) {}
+}
 
-        Spacer(modifier = Modifier.height(16.dp))
+@Composable
+fun RememberUpdateState(onTimeOut: () -> Unit) {
+    val updatedOnTimeOut by rememberUpdatedState(newValue = onTimeOut)
+    LaunchedEffect(key1 = true) {
+        delay(1000L)
+        updatedOnTimeOut()
+    }
+}
 
-        Button(onClick = {
-            count++
-        }) {
-            Text(text = "Increase the counter", color = Color.White)
+@Composable
+fun Disposable() {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(key1 = lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_PAUSE) println("On pause called")
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 }
 
 @Composable
-fun AnimatedCounter(count: Int, textStyle: TextStyle, modifier: Modifier = Modifier) {
-    var oldCount by remember {
-        mutableIntStateOf(count)
-    }
-
+fun SideEffects() {
     SideEffect {
-        oldCount = count
+        println("Called after every successful recompose")
     }
+}
 
-    Row(modifier = modifier) {
-        val oldCountString = oldCount.toString()
-        val newCountString = count.toString()
-
-        for (i in newCountString.indices) {
-            val oldChar = oldCountString.getOrNull(i)
-            val newChar = newCountString[i]
-
-            val char = if (oldChar == newChar) {
-                oldCountString[i]
-            } else {
-                newCountString[i]
-            }
-
-            AnimatedContent(
-                targetState = char,
-                label = "",
-                transitionSpec = {
-                    slideInVertically { it } togetherWith slideOutVertically { -it }
-                }
-            ) { text ->
-                Text(
-                    text = text.toString(),
-                    style = textStyle,
-                    softWrap = false
-                )
-            }
+@Composable
+fun produceStateTest(countUpTo: Int): State<Int> {
+    return produceState(initialValue = 0) {
+        while (value < countUpTo) {
+            delay(1000L)
+            value++
         }
+    }
+}
+
+@Composable
+fun DerivedState() {
+    var counter by remember {
+        mutableIntStateOf(0)
+    }
+    val counterText by remember {
+        derivedStateOf { "The counter is $counter" }
+    }
+    Button(onClick = { counter++ }) {
+        Text(text = counterText)
+    }
+}
+
+@Composable
+fun SnapshotFlow() {
+    val scaffoldState = rememberScaffoldState()
+    LaunchedEffect(key1 = scaffoldState) {
+        snapshotFlow { scaffoldState.snackbarHostState }
+            .mapNotNull { it.currentSnackbarData?.message }
+            .distinctUntilChanged()
+            .collect { message ->
+                println("A snackbar with message $message was shown")
+            }
     }
 }
